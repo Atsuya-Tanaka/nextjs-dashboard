@@ -71,22 +71,22 @@ export async function createInvoice(prevState: State, formData: FormData) {
 
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
 
-export async function updateInvoice(id: string, prevState: State,formData: FormData) {
+export async function updateInvoice(id: string, prevState: State, formData: FormData) {
   const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
 
-    if (!validatedFields.success) {
-      return {
-        errors: validatedFields.error.flatten().fieldErrors,
-        message: 'Missing Fields. Failed to Update Invoice.',
-      };
-    }
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Invoice.',
+    };
+  }
 
-    const { customerId, amount, status } = validatedFields.data;
-    const amountInCents = amount * 100;
+  const { customerId, amount, status } = validatedFields.data;
+  const amountInCents = amount * 100;
 
   try {
     await sql`
@@ -110,11 +110,9 @@ export async function updateInvoice(id: string, prevState: State,formData: FormD
 export async function deleteInvoice(id: string) {
   try {
     await sql`DELETE FROM invoices WHERE id = ${id}`;
+    revalidatePath('/dashboard/invoices');
+  } catch (error) {
+    console.error('Failed to delete invoice:', error);
+    throw new Error('Failed to delete invoice');
   }
-  catch (error) {
-    return {
-      message: 'Database Error: Failed to Delete Invoice.'
-    };
-  }
-  revalidatePath('/dashboard/invoices');
 }
